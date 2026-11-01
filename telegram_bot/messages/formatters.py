@@ -7,14 +7,26 @@ from utils.ny_time import format_ny_time
 
 def format_start_message(user_name: str) -> str:
     return (
-        f"👋 *Welcome to Day Trader Telegram Bot, {user_name}!*\n\n"
-        f"This bot converts all 11 core trading skills from the Day Trader repository "
-        f"into an interactive, institutional-grade assistant for US stock markets.\n\n"
-        f"🔒 *SAFETY POLICY:*\n"
-        f"• Paper trading mode strictly enforced.\n"
-        f"• Every order requires individual manual button approval.\n"
-        f"• Live trading endpoints are permanently blocked.\n\n"
-        f"Use /menu or the buttons below to begin."
+        f"👋 *Welcome to Trade4U Quantitative Trading Bot, {user_name}!*\n\n"
+        "⚡ *AN INSTITUTIONAL-GRADE US DAY TRADING ENGINE*\n"
+        "High-performance quantitative analysis, real-time SEC intelligence, "
+        "and automated bracket execution for NASDAQ & NYSE stocks.\n\n"
+        "🔥 *11 CORE QUANT TRADING SKILLS:*\n"
+        "1. 📊 *Market Scanner* - 5,900+ US stocks ORB & breakout screener\n"
+        "2. 📰 *SEC News Monitor* - Live 8-K filings & breaking catalyst moves\n"
+        "3. 🎯 *Entry Timer* - 5-min bar Opening Range Breakout tracking\n"
+        "4. 🚪 *Exit Planner* - Mathematical profit targets & stop-losses\n"
+        "5. ⏳ *Time Machine* - 10,000 historical Monte Carlo simulations\n"
+        "6. 🛡 *Risk Engine* - 15 mandatory pre-trade safety validations\n"
+        "7. 💰 *Capital Budget* - Exact mathematical position & risk sizing\n"
+        "8. 📈 *Paper Broker* - Alpaca REST client with tamper-proof tickets\n"
+        "9. 🔔 *Smart Alerts* - Price targets & NYSE market clock events\n"
+        "10. 🏢 *SEC Analyst* - Audited 10-K/10-Q multi-quarter XBRL financials\n"
+        "11. 🏛 *Pelosi Tracker* - US Congress public stock disclosures\n\n"
+        "🤖 *AUTO-TRADE READY:* Auto-entry, bracket auto-exit & 15:55 flat-by close.\n"
+        "🔒 *MODE:* Strict Paper Trading (Zero live-money risk).\n\n"
+        "👑 *Owner:* @MeAwara\n\n"
+        "Use /menu or tap the buttons below to begin:"
     )
 
 

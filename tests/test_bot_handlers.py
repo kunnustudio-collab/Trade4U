@@ -111,7 +111,7 @@ class TestBotHandlers(unittest.IsolatedAsyncioTestCase):
         await h.start_command(update, context)
         update.message.reply_text.assert_called_once()
         call_text = update.message.reply_text.call_args[0][0]
-        self.assertIn("Welcome to Day Trader Telegram Bot", call_text)
+        self.assertIn("Welcome to Trade4U Quantitative Trading Bot", call_text)
 
         update, context = self._make_update("/help")
         await h.help_command(update, context)
