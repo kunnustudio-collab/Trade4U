@@ -3,7 +3,7 @@
 from telegram_bot.handlers.general import (
     start_command, help_command, menu_command, status_command,
     settings_command, watchlist_command, addstock_command, removestock_command,
-    autotrade_command
+    autotrade_command, grant_command, revoke_command, users_command
 )
 from telegram_bot.handlers.scanner import scan_command, universe_command
 from telegram_bot.handlers.news import news_command
@@ -24,7 +24,7 @@ from telegram_bot.handlers.callbacks import callback_query_handler
 __all__ = [
     "start_command", "help_command", "menu_command", "status_command",
     "settings_command", "watchlist_command", "addstock_command", "removestock_command",
-    "autotrade_command",
+    "autotrade_command", "grant_command", "revoke_command", "users_command",
     "scan_command", "universe_command", "news_command", "entry_command",
     "watch_command", "unwatch_command", "exit_command", "timemachine_command",
     "risk_command", "budget_command", "broker_command", "account_command",

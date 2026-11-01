@@ -46,6 +46,24 @@ class Repository:
         await self.session.flush()
         return user
 
+    async def is_user_admin(self, telegram_id: int) -> bool:
+        # Check settings config allowlist first (Owner is always admin)
+        if settings.is_user_authorized(telegram_id):
+            return True
+        stmt = select(AuthorizedUser).where(AuthorizedUser.telegram_id == telegram_id, AuthorizedUser.is_admin == True)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
+    async def remove_authorized_user(self, telegram_id: int) -> bool:
+        stmt = delete(AuthorizedUser).where(AuthorizedUser.telegram_id == telegram_id)
+        res = await self.session.execute(stmt)
+        return res.rowcount > 0
+
+    async def get_all_authorized_users(self) -> List[AuthorizedUser]:
+        stmt = select(AuthorizedUser).order_by(AuthorizedUser.created_at.desc())
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
+
     # ----------------- Watchlist -----------------
     async def get_watchlist(self, user_id: int) -> List[str]:
         stmt = select(WatchlistItem.symbol).where(WatchlistItem.user_id == user_id)

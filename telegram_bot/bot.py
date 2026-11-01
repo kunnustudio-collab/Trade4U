@@ -47,6 +47,11 @@ def build_application(token: Optional[str] = None) -> Application:
     app.add_handler(CommandHandler("addstock", h.addstock_command))
     app.add_handler(CommandHandler("removestock", h.removestock_command))
     app.add_handler(CommandHandler("autotrade", h.autotrade_command))
+    app.add_handler(CommandHandler("grant", h.grant_command))
+    app.add_handler(CommandHandler("adduser", h.grant_command))
+    app.add_handler(CommandHandler("revoke", h.revoke_command))
+    app.add_handler(CommandHandler("deluser", h.revoke_command))
+    app.add_handler(CommandHandler("users", h.users_command))
 
     # 2. Scanner commands
     app.add_handler(CommandHandler("scan", h.scan_command))

@@ -3,7 +3,7 @@
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from telegram_bot.middleware.auth import authorized_only
+from telegram_bot.middleware.auth import authorized_only, admin_only
 from telegram_bot.keyboards.inline import main_menu_keyboard
 from telegram_bot.messages.formatters import format_start_message, format_help_message
 from config.settings import settings
@@ -34,13 +34,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
     if not is_auth:
         await update.effective_message.reply_text(
-            f"👋 *Hello {username}! Welcome to Day Trader Bot.*\n\n"
-            f"⚠️ *SETUP REQUIRED:*\n"
+            f"👋 *Hello {username}! Welcome to Trade4U Trading Bot.*\n\n"
+            f"🔒 *ACCESS RESTRICTED:*\n"
             f"Your Telegram User ID is: `{user_id}`\n\n"
-            f"For security, this trading bot only accepts commands from authorized users.\n"
-            f"Please add your User ID to your `.env` file:\n"
-            f"`AUTHORIZED_TELEGRAM_USER_IDS={user_id}`\n\n"
-            f"Then restart the bot or run `/start` again once authorized.",
+            f"This bot is currently private and restricted.\n"
+            f"Please share your User ID with the Owner to get access approved:\n"
+            f"👑 *Owner:* @MeAwara\n\n"
+            f"Once approved, you will be able to use all trading features.",
             parse_mode="Markdown"
         )
         return
@@ -227,3 +227,97 @@ async def autotrade_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         "• `/autotrade off` - Revert to manual approval mode"
     )
     await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=autotrade_keyboard(is_enabled))
+
+
+@admin_only
+async def grant_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /grant <USER_ID> [NAME] - Authorize a new user to use the bot."""
+    if not context.args:
+        await update.effective_message.reply_text(
+            "👑 *HOW TO GRANT BOT ACCESS:*\n\n"
+            "Usage: `/grant <TELEGRAM_USER_ID> [NAME]`\n"
+            "Example: `/grant 123456789 John`\n\n"
+            "_(Ask the user to send `/start` to the bot to get their User ID)_",
+            parse_mode="Markdown"
+        )
+        return
+
+    try:
+        target_id = int(context.args[0])
+    except ValueError:
+        await update.effective_message.reply_text("❌ User ID must be a valid integer number.")
+        return
+
+    user_label = context.args[1] if len(context.args) > 1 else None
+
+    async with get_session() as session:
+        repo = Repository(session)
+        user = await repo.add_authorized_user(
+            telegram_id=target_id,
+            first_name=user_label or f"User-{target_id}",
+            is_admin=False
+        )
+        await repo.log_audit("USER_ACCESS_GRANTED", f"Granted access to {target_id}", update.effective_user.id)
+
+    await update.effective_message.reply_text(
+        f"✅ *ACCESS GRANTED SUCCESSFULLY!*\n\n"
+        f"• User ID: `{target_id}`\n"
+        f"• Name: `{user.first_name}`\n"
+        f"• Status: `Authorized`\n\n"
+        f"The user can now send `/start` to the bot to access all trading skills!",
+        parse_mode="Markdown"
+    )
+
+
+@admin_only
+async def revoke_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /revoke <USER_ID> - Revoke bot access from a user."""
+    if not context.args:
+        await update.effective_message.reply_text("Usage: `/revoke <TELEGRAM_USER_ID>`", parse_mode="Markdown")
+        return
+
+    try:
+        target_id = int(context.args[0])
+    except ValueError:
+        await update.effective_message.reply_text("❌ User ID must be a valid integer number.")
+        return
+
+    # Protect Owner
+    if settings.is_user_authorized(target_id) and target_id == update.effective_user.id:
+        await update.effective_message.reply_text("⚠️ You cannot revoke access from yourself (Owner).")
+        return
+
+    async with get_session() as session:
+        repo = Repository(session)
+        removed = await repo.remove_authorized_user(target_id)
+        if removed:
+            await repo.log_audit("USER_ACCESS_REVOKED", f"Revoked access from {target_id}", update.effective_user.id)
+            await update.effective_message.reply_text(f"🗑 Access revoked for User ID `{target_id}`.", parse_mode="Markdown")
+        else:
+            await update.effective_message.reply_text(f"ℹ️ User ID `{target_id}` was not found in the authorized database.", parse_mode="Markdown")
+
+
+@admin_only
+async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /users - List all authorized users."""
+    async with get_session() as session:
+        repo = Repository(session)
+        db_users = await repo.get_all_authorized_users()
+
+    lines = ["👥 *AUTHORIZED BOT USERS:*", ""]
+    # Add owner
+    owner_ids = settings.get_authorized_user_ids()
+    for oid in owner_ids:
+        lines.append(f"• `{oid}` - 👑 *Owner* (@MeAwara)")
+
+    for u in db_users:
+        if u.telegram_id not in owner_ids:
+            name = u.first_name or u.username or "User"
+            adm = " (Admin)" if u.is_admin else ""
+            lines.append(f"• `{u.telegram_id}` - {name}{adm}")
+
+    lines.append("")
+    lines.append("To grant access: `/grant <USER_ID>`")
+    lines.append("To revoke access: `/revoke <USER_ID>`")
+
+    await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
