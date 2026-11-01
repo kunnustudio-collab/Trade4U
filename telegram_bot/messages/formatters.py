@@ -128,41 +128,67 @@ def format_news_message(news_data: Dict[str, Any], symbol: Optional[str] = None)
 
 def format_entry_message(entry: Dict[str, Any]) -> str:
     sym = entry.get("symbol", "N/A")
-    status = entry.get("status", "unknown").upper()
+    status = str(entry.get("status", "unknown")).upper()
     provider = entry.get("provider", "Yahoo Finance")
+    reason = entry.get("reason", "")
+    prev_close = entry.get("prev_close")
+    next_open = entry.get("next_open")
 
-    status_icon = "🟢" if status == "TRIGGERED" else ("🟡" if status == "WAITING" else "🔴")
+    if status in ("TRIGGERED", "ACTIVE"):
+        status_icon = "🟢"
+    elif status in ("WAITING", "FORMING"):
+        status_icon = "🟡"
+    else:
+        status_icon = "🔴"
 
     lines = [
         f"🎯 *ENTRY TIMER: {sym}*",
         f"• *Status:* {status_icon} `{status}`",
         f"• *Data Source:* {provider}",
         f"• *Time:* `{entry.get('now', format_ny_time())}`",
-        ""
     ]
 
-    if "opening_range" in entry:
+    if reason:
+        lines.append(f"• *Market Note:* {reason}")
+    if next_open:
+        lines.append(f"• *Next Market Open:* `{next_open} ET`")
+    if prev_close is not None:
+        lines.append(f"• *Previous Close:* `${prev_close:.2f}`")
+
+    lines.append("")
+
+    if entry.get("opening_range"):
         rng = entry["opening_range"]
+        high = rng.get("high")
+        low = rng.get("low")
+        high_str = f"${high:.2f}" if high is not None else "N/A"
+        low_str = f"${low:.2f}" if low is not None else "N/A"
+        lvl = entry.get("level")
+        lvl_str = f"${lvl:.2f}" if lvl is not None else "N/A"
         lines.append(
             f"📊 *Opening Range (15m):*\n"
-            f"• High: `${rng.get('high', 0.0):.2f}`\n"
-            f"• Low: `${rng.get('low', 0.0):.2f}`\n"
-            f"• Level to beat: `${entry.get('level', 0.0):.2f}`\n"
+            f"• High: `{high_str}`\n"
+            f"• Low: `{low_str}`\n"
+            f"• Level to beat: `{lvl_str}`\n"
         )
 
-    if status == "TRIGGERED" and "trigger" in entry:
+    if status == "TRIGGERED" and entry.get("trigger"):
         trig = entry["trigger"]
+        p = trig.get("price")
+        p_str = f"${p:.2f}" if p is not None else "N/A"
         lines.append(
             f"⚡ *Trigger Event:*\n"
-            f"• Price: `${trig.get('price', 0.0):.2f}`\n"
+            f"• Price: `{p_str}`\n"
             f"• Bar Close Time: `{trig.get('time', 'N/A')}`\n"
             f"• Close above high: `+{trig.get('pct_over', 0.0):.2f}%`\n"
         )
-    elif status == "WAITING" and "last" in entry:
+    elif status == "WAITING" and entry.get("last"):
         last = entry["last"]
+        close_p = last.get("close")
+        close_str = f"${close_p:.2f}" if close_p is not None else "N/A"
         lines.append(
             f"⏳ *Currently Waiting:*\n"
-            f"• Last Bar Close: `${last.get('close', 0.0):.2f}`\n"
+            f"• Last Bar Close: `{close_str}`\n"
             f"• Distance to Level: `{last.get('vs_level_pct', 0.0):.2f}%`\n"
         )
 
