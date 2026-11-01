@@ -15,7 +15,7 @@ pelosi_adapter = PelosiAdapter()
 async def pelosi_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /pelosi, /pelosi new, /pelosi history."""
     subcmd = context.args[0].lower() if context.args else ""
-    msg = await update.message.reply_text("🏛 Querying US House Clerk public financial disclosure index...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text("🏛 Querying US House Clerk public financial disclosure index...", parse_mode="Markdown")
 
     try:
         if subcmd == "new":

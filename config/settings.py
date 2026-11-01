@@ -74,6 +74,8 @@ class Settings(BaseSettings):
                 f"CRITICAL SECURITY VIOLATION: Non-paper Alpaca URL rejected: '{v}'. "
                 "Only paper trading ('https://paper-api.alpaca.markets') is permitted."
             )
+        if clean.endswith("/v2"):
+            clean = clean[:-3]
         return clean
 
     @field_validator("PAPER_TRADING_ONLY")

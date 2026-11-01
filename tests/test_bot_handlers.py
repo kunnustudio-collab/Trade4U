@@ -169,6 +169,28 @@ class TestBotHandlers(unittest.IsolatedAsyncioTestCase):
         await h.alerts_command(update, context)
         self.assertIn("PRICE & MARKET ALERTS", update.message.reply_text.call_args[0][0])
 
+    async def test_callbacks_navigation(self):
+        query = MagicMock(spec=CallbackQuery)
+        query.data = "nav:menu"
+        query.from_user = self.user
+        query.answer = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        update = MagicMock(spec=Update)
+        update.effective_user = self.user
+        update.effective_chat = self.chat
+        update.effective_message = MagicMock(spec=Message)
+        update.message = None
+        update.callback_query = query
+
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.args = []
+
+        await h.callback_query_handler(update, context)
+        query.answer.assert_called_once()
+        query.edit_message_text.assert_called_once()
+        self.assertIn("DAY TRADER CONTROL DASHBOARD", query.edit_message_text.call_args[0][0])
+
 
 if __name__ == "__main__":
     unittest.main()

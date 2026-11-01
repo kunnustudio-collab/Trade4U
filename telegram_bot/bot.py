@@ -35,7 +35,7 @@ def build_application(token: Optional[str] = None) -> Application:
         # For offline testing or building without live token
         bot_token = "123456789:MOCK_TOKEN_FOR_BUILD_AND_TESTS_XYZ"
 
-    app = ApplicationBuilder().token(bot_token).build()
+    app = ApplicationBuilder().token(bot_token).concurrent_updates(True).build()
 
     # 1. General commands
     app.add_handler(CommandHandler("start", h.start_command))

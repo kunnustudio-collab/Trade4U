@@ -34,8 +34,11 @@ class AlpacaPaperBroker:
                 f"SECURITY VIOLATION: Refusing connection to non-paper URL: {raw_url}. "
                 "Only official Alpaca Paper Trading ('https://paper-api.alpaca.markets') is allowed."
             )
+        if raw_url.endswith("/v2"):
+            raw_url = raw_url[:-3]
 
         self.base_url = raw_url
+        self._auth_failed_until = 0.0
         self.headers = {
             "APCA-API-KEY-ID": self.api_key,
             "APCA-API-SECRET-KEY": self.secret_key,
@@ -52,11 +55,16 @@ class AlpacaPaperBroker:
         if not self.is_configured():
             raise BrokerError("Alpaca API credentials not configured. Please set ALPACA_API_KEY and ALPACA_SECRET_KEY in .env.")
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        import time
+        if time.time() < self._auth_failed_until:
+            raise BrokerError("Alpaca authentication failed. Check your paper API credentials in .env.")
+
+        async with httpx.AsyncClient(timeout=4.0) as client:
             try:
                 resp = await client.get(f"{self.base_url}/v2/account", headers=self.headers)
                 if resp.status_code == 401 or resp.status_code == 403:
-                    raise BrokerError("Alpaca authentication failed. Check your paper API credentials.")
+                    self._auth_failed_until = time.time() + 60.0
+                    raise BrokerError("Alpaca authentication failed. Check your paper API credentials in .env.")
                 resp.raise_for_status()
                 data = resp.json()
 
@@ -85,7 +93,7 @@ class AlpacaPaperBroker:
         if not self.is_configured():
             raise BrokerError("Alpaca API credentials not configured.")
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             try:
                 resp = await client.get(f"{self.base_url}/v2/positions", headers=self.headers)
                 resp.raise_for_status()
@@ -112,7 +120,7 @@ class AlpacaPaperBroker:
         if not self.is_configured():
             raise BrokerError("Alpaca API credentials not configured.")
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             try:
                 params = {"status": status, "limit": limit}
                 resp = await client.get(f"{self.base_url}/v2/orders", headers=self.headers, params=params)
@@ -190,7 +198,7 @@ class AlpacaPaperBroker:
         if not self.is_configured():
             raise BrokerError("Alpaca API credentials not configured.")
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             try:
                 resp = await client.delete(f"{self.base_url}/v2/orders/{order_id}", headers=self.headers)
                 return resp.is_success
@@ -203,7 +211,7 @@ class AlpacaPaperBroker:
         if not self.is_configured():
             raise BrokerError("Alpaca API credentials not configured.")
 
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=4.0) as client:
             try:
                 resp = await client.delete(f"{self.base_url}/v2/positions/{symbol.upper()}", headers=self.headers)
                 resp.raise_for_status()

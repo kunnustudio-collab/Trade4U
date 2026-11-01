@@ -45,12 +45,12 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 target_val = f"${a.price:.2f}" if a.price else (f"{a.pct}%" if a.pct else a.time_at or "")
                 lines.append(f"• ID `{a.id}`: `{sym}` {a.rule_type} {target_val} - _{st}_")
 
-        await update.message.reply_text("\n".join(lines), parse_mode="Markdown", reply_markup=alerts_menu_keyboard())
+        await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown", reply_markup=alerts_menu_keyboard())
 
     elif subcmd == "add":
         # Format: /alerts add SYMBOL [target/stop/above/below] PRICE
         if len(context.args) < 4:
-            await update.message.reply_text(
+            await update.effective_message.reply_text(
                 "Usage: `/alerts add SYMBOL [above|below|stop|target] PRICE`\nExample: `/alerts add TSLA target 370.00`",
                 parse_mode="Markdown"
             )
@@ -61,7 +61,7 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         try:
             target_price = float(context.args[3])
         except ValueError:
-            await update.message.reply_text("Price must be a valid number.")
+            await update.effective_message.reply_text("Price must be a valid number.")
             return
 
         async with get_session() as session:
@@ -76,14 +76,14 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             )
             await repo.add_alert(rec)
 
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             f"✅ Alert created: Notify when `{sym}` hits `{rule_type}` `${target_price:.2f}`.",
             parse_mode="Markdown"
         )
 
     elif subcmd in ("remove", "delete"):
         if len(context.args) < 2:
-            await update.message.reply_text("Usage: `/alerts remove <ALERT_ID>`", parse_mode="Markdown")
+            await update.effective_message.reply_text("Usage: `/alerts remove <ALERT_ID>`", parse_mode="Markdown")
             return
         try:
             aid = int(context.args[1])
@@ -91,15 +91,15 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 repo = Repository(session)
                 removed = await repo.delete_alert(aid, user_id)
             if removed:
-                await update.message.reply_text(f"🗑 Alert `{aid}` removed.", parse_mode="Markdown")
+                await update.effective_message.reply_text(f"🗑 Alert `{aid}` removed.", parse_mode="Markdown")
             else:
-                await update.message.reply_text(f"Alert `{aid}` not found.", parse_mode="Markdown")
+                await update.effective_message.reply_text(f"Alert `{aid}` not found.", parse_mode="Markdown")
         except ValueError:
-            await update.message.reply_text("Alert ID must be an integer.")
+            await update.effective_message.reply_text("Alert ID must be an integer.")
 
     elif subcmd in ("pause", "resume"):
         if len(context.args) < 2:
-            await update.message.reply_text(f"Usage: `/alerts {subcmd} <ALERT_ID>`", parse_mode="Markdown")
+            await update.effective_message.reply_text(f"Usage: `/alerts {subcmd} <ALERT_ID>`", parse_mode="Markdown")
             return
         try:
             aid = int(context.args[1])
@@ -108,8 +108,8 @@ async def alerts_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 repo = Repository(session)
                 updated = await repo.set_alert_status(aid, user_id, is_active)
             if updated:
-                await update.message.reply_text(f"Alert `{aid}` set to {'Active' if is_active else 'Paused'}.", parse_mode="Markdown")
+                await update.effective_message.reply_text(f"Alert `{aid}` set to {'Active' if is_active else 'Paused'}.", parse_mode="Markdown")
             else:
-                await update.message.reply_text(f"Alert `{aid}` not found.", parse_mode="Markdown")
+                await update.effective_message.reply_text(f"Alert `{aid}` not found.", parse_mode="Markdown")
         except ValueError:
-            await update.message.reply_text("Alert ID must be an integer.")
+            await update.effective_message.reply_text("Alert ID must be an integer.")

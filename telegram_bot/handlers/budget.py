@@ -37,13 +37,13 @@ async def budget_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                         elif k in ("cash_buffer_pct", "buffer"):
                             updates["cash_buffer_pct"] = float(v)
                     except ValueError:
-                        await update.message.reply_text(f"Invalid number for parameter `{k}`.", parse_mode="Markdown")
+                        await update.effective_message.reply_text(f"Invalid number for parameter `{k}`.", parse_mode="Markdown")
                         return
 
             if updates:
                 b = await repo.update_budget(user_id, **updates)
                 await repo.log_audit("BUDGET_UPDATED", str(updates), user_id)
-                await update.message.reply_text("✅ Trading budget parameters updated successfully.", parse_mode="Markdown")
+                await update.effective_message.reply_text("✅ Trading budget parameters updated successfully.", parse_mode="Markdown")
 
         # Display status
         text = (
@@ -59,4 +59,4 @@ async def budget_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             "To modify values:\n"
             "`/budget set budget=10000 max_loss=75 daily_loss=200`"
         )
-        await update.message.reply_text(text, parse_mode="Markdown")
+        await update.effective_message.reply_text(text, parse_mode="Markdown")

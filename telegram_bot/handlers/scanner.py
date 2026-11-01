@@ -21,14 +21,14 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     user_id = update.effective_user.id
 
     if not subcmd:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             "📊 *US MARKET SCANNER*\nSelect a scanning strategy:",
             parse_mode="Markdown",
             reply_markup=scanner_keyboard()
         )
         return
 
-    progress_msg = await update.message.reply_text(f"🔍 Running `{subcmd}` scan on US stocks...", parse_mode="Markdown")
+    progress_msg = await update.effective_message.reply_text(f"🔍 Running `{subcmd}` scan on US stocks...", parse_mode="Markdown")
 
     async with get_session() as session:
         repo = Repository(session)
@@ -61,7 +61,7 @@ async def scan_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 @authorized_only
 async def universe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /universe command."""
-    msg = await update.message.reply_text("🌐 Fetching Nasdaq Trader symbol directories...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text("🌐 Fetching Nasdaq Trader symbol directories...", parse_mode="Markdown")
     try:
         res = await scanner_adapter.get_universe()
         output = res.get("output", "")

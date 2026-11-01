@@ -15,11 +15,11 @@ analyst_adapter = AnalystAdapter()
 async def analyst_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /analyst TICKER command."""
     if not context.args:
-        await update.message.reply_text("Usage: `/analyst TICKER` (e.g. `/analyst TSLA`)", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/analyst TICKER` (e.g. `/analyst TSLA`)", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
-    msg = await update.message.reply_text(f"🏢 Pulling reported SEC EDGAR XBRL company facts for `{sym}`...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text(f"🏢 Pulling reported SEC EDGAR XBRL company facts for `{sym}`...", parse_mode="Markdown")
 
     try:
         res = await analyst_adapter.get_fundamentals(sym, quarters=8)

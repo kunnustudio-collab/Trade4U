@@ -22,7 +22,7 @@ alerts_adapter = AlertsAdapter()
 async def timemachine_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /timemachine [TICKER] command."""
     sym = context.args[0].strip().upper() if context.args else "TSLA"
-    msg = await update.message.reply_text(
+    msg = await update.effective_message.reply_text(
         f"⏳ Replaying 10,000 simulated sessions for `{sym}` from past 60 days of 5-minute bars...\n"
         f"_(Preserves exact original simulation methodology and seed 19)_",
         parse_mode="Markdown"

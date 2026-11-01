@@ -25,7 +25,7 @@ async def risk_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     sym = args[0].strip().upper() if args else "TSLA"
     user_id = update.effective_user.id
 
-    msg = await update.message.reply_text(f"🛡 Running 15 pre-trade risk checks for `{sym}`...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text(f"🛡 Running 15 pre-trade risk checks for `{sym}`...", parse_mode="Markdown")
 
     try:
         async with get_session() as session:

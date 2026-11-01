@@ -33,7 +33,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         is_auth = await repo.is_user_authorized(user_id)
 
     if not is_auth:
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             f"👋 *Hello {username}! Welcome to Day Trader Bot.*\n\n"
             f"⚠️ *SETUP REQUIRED:*\n"
             f"Your Telegram User ID is: `{user_id}`\n\n"
@@ -46,20 +46,20 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     text = format_start_message(username)
-    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=main_menu_keyboard())
+    await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=main_menu_keyboard())
 
 
 @authorized_only
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /help command."""
     text = format_help_message()
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await update.effective_message.reply_text(text, parse_mode="Markdown")
 
 
 @authorized_only
 async def menu_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /menu dashboard command."""
-    await update.message.reply_text(
+    await update.effective_message.reply_text(
         "🎛 *DAY TRADER CONTROL DASHBOARD*\nSelect any trading skill or tool below:",
         parse_mode="Markdown",
         reply_markup=main_menu_keyboard()
@@ -91,7 +91,7 @@ async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         f"• *Buying Power:* `${buying_power:,.2f}`\n"
         f"• *Security Policy:* Manual approval before EVERY order"
     )
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await update.effective_message.reply_text(text, parse_mode="Markdown")
 
 
 @authorized_only
@@ -115,7 +115,7 @@ async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         f"• *Paper Trading:* `YES` (live orders blocked)\n\n"
         "To update limits: `/budget set budget=5000 max_loss=50`"
     )
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await update.effective_message.reply_text(text, parse_mode="Markdown")
 
 
 @authorized_only
@@ -134,14 +134,14 @@ async def watchlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         "• To remove: `/removestock TICKER`\n"
         "• To scan: `/scan watchlist`"
     )
-    await update.message.reply_text(text, parse_mode="Markdown")
+    await update.effective_message.reply_text(text, parse_mode="Markdown")
 
 
 @authorized_only
 async def addstock_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /addstock <symbol>."""
     if not context.args:
-        await update.message.reply_text("Usage: `/addstock TICKER` (e.g. `/addstock TSLA`)", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/addstock TICKER` (e.g. `/addstock TSLA`)", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
@@ -152,16 +152,16 @@ async def addstock_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         added = await repo.add_to_watchlist(user_id, sym)
 
     if added:
-        await update.message.reply_text(f"✅ Added `{sym}` to your watchlist.", parse_mode="Markdown")
+        await update.effective_message.reply_text(f"✅ Added `{sym}` to your watchlist.", parse_mode="Markdown")
     else:
-        await update.message.reply_text(f"ℹ️ `{sym}` is already on your watchlist.", parse_mode="Markdown")
+        await update.effective_message.reply_text(f"ℹ️ `{sym}` is already on your watchlist.", parse_mode="Markdown")
 
 
 @authorized_only
 async def removestock_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /removestock <symbol>."""
     if not context.args:
-        await update.message.reply_text("Usage: `/removestock TICKER` (e.g. `/removestock TSLA`)", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/removestock TICKER` (e.g. `/removestock TSLA`)", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
@@ -172,6 +172,6 @@ async def removestock_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         removed = await repo.remove_from_watchlist(user_id, sym)
 
     if removed:
-        await update.message.reply_text(f"🗑 Removed `{sym}` from your watchlist.", parse_mode="Markdown")
+        await update.effective_message.reply_text(f"🗑 Removed `{sym}` from your watchlist.", parse_mode="Markdown")
     else:
-        await update.message.reply_text(f"ℹ️ `{sym}` was not found on your watchlist.", parse_mode="Markdown")
+        await update.effective_message.reply_text(f"ℹ️ `{sym}` was not found on your watchlist.", parse_mode="Markdown")

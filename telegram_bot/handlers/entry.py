@@ -18,11 +18,11 @@ entry_adapter = EntryAdapter()
 async def entry_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /entry TICKER command."""
     if not context.args:
-        await update.message.reply_text("Usage: `/entry TICKER` (e.g. `/entry TSLA`)", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/entry TICKER` (e.g. `/entry TSLA`)", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
-    msg = await update.message.reply_text(f"🎯 Checking 5-minute opening-range bars for `{sym}`...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text(f"🎯 Checking 5-minute opening-range bars for `{sym}`...", parse_mode="Markdown")
 
     try:
         res = await entry_adapter.check_entry(sym, setup="orb", interval="5m")
@@ -37,7 +37,7 @@ async def entry_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /watch TICKER command."""
     if not context.args:
-        await update.message.reply_text("Usage: `/watch TICKER` (e.g. `/watch TSLA`)", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/watch TICKER` (e.g. `/watch TSLA`)", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
@@ -47,7 +47,7 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         repo = Repository(session)
         await repo.add_to_watchlist(user_id, sym)
 
-    await update.message.reply_text(
+    await update.effective_message.reply_text(
         f"👀 Now monitoring `{sym}` bar-by-bar.\n"
         f"You will receive an alert if it breaks its opening range.\n"
         f"Check current status anytime: `/entry {sym}`",
@@ -59,7 +59,7 @@ async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /unwatch TICKER command."""
     if not context.args:
-        await update.message.reply_text("Usage: `/unwatch TICKER`", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/unwatch TICKER`", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
@@ -69,4 +69,4 @@ async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         repo = Repository(session)
         await repo.remove_from_watchlist(user_id, sym)
 
-    await update.message.reply_text(f"Stopped watching `{sym}`.", parse_mode="Markdown")
+    await update.effective_message.reply_text(f"Stopped watching `{sym}`.", parse_mode="Markdown")

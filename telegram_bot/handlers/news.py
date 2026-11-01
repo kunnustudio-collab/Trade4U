@@ -26,7 +26,7 @@ async def news_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             symbols = await repo.get_watchlist(user_id)
 
     target_desc = f"`{ticker}`" if ticker else "watchlist stocks"
-    msg = await update.message.reply_text(f"📰 Checking breaking news & SEC 8-Ks for {target_desc}...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text(f"📰 Checking breaking news & SEC 8-Ks for {target_desc}...", parse_mode="Markdown")
 
     try:
         res = await news_adapter.get_news(tickers=symbols, hours=24, include_sec=True)

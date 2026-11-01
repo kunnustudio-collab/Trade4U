@@ -24,7 +24,7 @@ async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         args.pop(0)
 
     sym = args[0].strip().upper() if args else "TSLA"
-    msg = await update.message.reply_text(f"🚪 Planning exit targets and stop-loss for `{sym}`...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text(f"🚪 Planning exit targets and stop-loss for `{sym}`...", parse_mode="Markdown")
 
     try:
         # Check entry data to obtain range high / low and entry price

@@ -33,10 +33,16 @@ async def broker_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         acct = await broker.get_account()
         positions = await broker.get_positions()
         text = format_broker_account_message(acct, positions)
-        await update.message.reply_text(text, parse_mode="Markdown", reply_markup=broker_menu_keyboard())
+        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=broker_menu_keyboard())
     except Exception as e:
-        logger.error("Broker fetch error: %s", e)
-        await update.message.reply_text(f"❌ Broker error: {str(e)}")
+        logger.warning("Alpaca fetch error: %s. Falling back to local paper simulator.", e)
+        from services.broker_service import MockPaperBroker
+        mock = MockPaperBroker(initial_balance=settings.DEFAULT_BUDGET)
+        acct = await mock.get_account()
+        positions = await mock.get_positions()
+        notice = "⚠️ *Alpaca Notice:* Check paper keys in `.env`\n*Showing Local Paper Simulator Account:*\n\n"
+        text = notice + format_broker_account_message(acct, positions)
+        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=broker_menu_keyboard())
 
 
 @authorized_only
@@ -51,8 +57,15 @@ async def positions_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     broker = get_broker_instance()
     try:
         positions = await broker.get_positions()
+    except Exception as e:
+        logger.warning("Broker positions error, checking local mock: %s", e)
+        from services.broker_service import MockPaperBroker
+        mock = MockPaperBroker(initial_balance=settings.DEFAULT_BUDGET)
+        positions = await mock.get_positions()
+
+    try:
         if not positions:
-            await update.message.reply_text("📦 *Open Positions:* None\nAccount is currently flat.", parse_mode="Markdown")
+            await update.effective_message.reply_text("📦 *Open Positions:* None\nAccount is currently flat.", parse_mode="Markdown")
             return
 
         lines = ["📦 *OPEN PAPER POSITIONS:*"]
@@ -64,9 +77,9 @@ async def positions_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
             sign = "+" if pl >= 0 else ""
             lines.append(f"• *{sym}*: {qty} shares @ ${price:.2f} | P&L: `{sign}${pl:.2f}` ({sign}{p['unrealized_plpc']:.2f}%)")
 
-        await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+        await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
     except Exception as e:
-        await update.message.reply_text(f"❌ Error getting positions: {str(e)}")
+        await update.effective_message.reply_text(f"❌ Error getting positions: {str(e)}")
 
 
 @authorized_only
@@ -75,8 +88,15 @@ async def orders_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     broker = get_broker_instance()
     try:
         orders = await broker.get_orders(status="all", limit=10)
+    except Exception as e:
+        logger.warning("Broker orders error, checking local mock: %s", e)
+        from services.broker_service import MockPaperBroker
+        mock = MockPaperBroker(initial_balance=settings.DEFAULT_BUDGET)
+        orders = await mock.get_orders(status="all", limit=10)
+
+    try:
         if not orders:
-            await update.message.reply_text("📋 *Orders:* No recent orders found on broker.", parse_mode="Markdown")
+            await update.effective_message.reply_text("📋 *Orders:* No recent orders found on broker.", parse_mode="Markdown")
             return
 
         lines = ["📋 *RECENT ORDERS TODAY:*"]
@@ -87,21 +107,21 @@ async def orders_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
             st = o.get("status", "").upper()
             lines.append(f"• `{st}` {side} {qty} {sym} (ID: `{o.get('broker_order_id', o.get('id', 'N/A'))[:8]}...`)")
 
-        await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+        await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
     except Exception as e:
-        await update.message.reply_text(f"❌ Error getting orders: {str(e)}")
+        await update.effective_message.reply_text(f"❌ Error getting orders: {str(e)}")
 
 
 @authorized_only
 async def order_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle /order TICKER: Generates order proposal with mandatory approval buttons."""
     if not context.args:
-        await update.message.reply_text("Usage: `/order TICKER` (e.g. `/order TSLA`)", parse_mode="Markdown")
+        await update.effective_message.reply_text("Usage: `/order TICKER` (e.g. `/order TSLA`)", parse_mode="Markdown")
         return
 
     sym = context.args[0].strip().upper()
     user_id = update.effective_user.id
-    msg = await update.message.reply_text(f"🔍 Analyzing setup and building order proposal for `{sym}`...", parse_mode="Markdown")
+    msg = await update.effective_message.reply_text(f"🔍 Analyzing setup and building order proposal for `{sym}`...", parse_mode="Markdown")
 
     try:
         # 1. Fetch current price
@@ -164,8 +184,12 @@ async def order_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         # 4. Check available buying power from broker
         broker = get_broker_instance()
-        acct = await broker.get_account()
-        buying_power = acct.get("buying_power", b.budget)
+        try:
+            acct = await broker.get_account()
+            buying_power = acct.get("buying_power", b.budget)
+        except Exception as e:
+            logger.warning("Broker account fetch error, using configured budget for buying power: %s", e)
+            buying_power = b.budget
 
         # 5. Create approval request
         passed, app_req, reason = await approval_service.create_approval_request(
@@ -180,7 +204,7 @@ async def order_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
         preview_text = format_order_preview_message(app_req)
         await msg.delete()
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             preview_text,
             parse_mode="Markdown",
             reply_markup=order_approval_keyboard(app_req.id)
@@ -198,7 +222,7 @@ async def sync_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     try:
         acct = await broker.get_account()
         positions = await broker.get_positions()
-        await update.message.reply_text(
+        await update.effective_message.reply_text(
             f"🔄 *BROKER SYNC COMPLETE*\n\n"
             f"• Account: `{acct.get('account_number')}`\n"
             f"• Portfolio Value: `${acct.get('portfolio_value', 0.0):,.2f}`\n"
@@ -207,7 +231,7 @@ async def sync_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             parse_mode="Markdown"
         )
     except Exception as e:
-        await update.message.reply_text(f"❌ Broker sync error: {str(e)}")
+        await update.effective_message.reply_text(f"❌ Broker sync error: {str(e)}")
 
 
 @authorized_only
@@ -218,11 +242,11 @@ async def trades_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         orders = await repo.get_orders_today()
 
     if not orders:
-        await update.message.reply_text("📜 *Trade History Today:* No orders executed yet today.", parse_mode="Markdown")
+        await update.effective_message.reply_text("📜 *Trade History Today:* No orders executed yet today.", parse_mode="Markdown")
         return
 
     lines = ["📜 *TODAY'S EXECUTED TRADES:*"]
     for o in orders:
         lines.append(f"• `{o.status}` {o.side.upper()} {o.qty} {o.symbol} (Broker ID: `{o.broker_order_id or 'N/A'}`)")
 
-    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
