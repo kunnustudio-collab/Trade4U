@@ -211,6 +211,142 @@ trader-alerts/      SKILL.md, alerts.py, alerts.example.json
 trader-analyst/     SKILL.md, facts.py, metrics.example.json
 trader-pelosi/      SKILL.md, ptr.py
 tests/              unittest suite + offline fixtures
+telegram_bot/       Telegram bot handlers, keyboards, formatters, and auth
+core/               Adapters for all 11 skills
+services/           Broker adapter, approval service, alert & scheduler services
+database/           Async SQLite database models and repository
+config/             Pydantic settings and security validators
+run_bot.py          Main bot application entrypoint
+```
+
+---
+
+# Day Trader Telegram Assistant (Production Edition)
+
+A complete conversion of the 11 original trading skills into a fully functional, production-grade Telegram assistant for US stock markets (NASDAQ, NYSE, TSLA, NVDA, AAPL, MSFT, AMZN, and broader universe).
+
+## 1. Key Features
+- **All 11 Skills Integrated**: Chart scanner, breaking news and 8-Ks, bar-by-bar entry timer, midpoint stop and target exit planner, 10,000-run Monte Carlo time machine, 15 pre-trade risk checks, budget position sizing, Alpaca paper trading executor, price/clock alerts, SEC EDGAR XBRL fundamentals, and House congressional trade disclosures.
+- **Strict Security & Paper Trading Only**: Operates strictly in paper trading mode (`https://paper-api.alpaca.markets`). Live broker endpoints are blocked.
+- **Mandatory Order Approval System**: Every order requires individual manual approval via interactive Telegram buttons (`[ APPROVE ORDER ]` / `[ REJECT ORDER ]`). Auto-execution is prohibited.
+- **Idempotency & Re-validation**: Orders expire after 5 minutes (TTL), verify user authorization, reject duplicate submissions, and re-run all 15 risk checks at approval time.
+- **Persistent SQLite Database**: Stores watchlists, custom budgets, risk limits, pending approval previews, executed paper orders, and alerts across restarts.
+- **Market Hours Scheduler**: Background scheduler operating in `America/New_York` timezone for opening bell, price checks, breaking news, and flat-by-close reminders.
+
+## 2. Requirements & Installation
+
+- Python 3.10+ (compatible with 3.8+)
+- SQLite3
+
+```bash
+# Clone or navigate to the repository
+cd day-trader-skill-main
+
+# Create virtual environment
+python -m venv .venv
+# Activate:
+# Windows:
+.venv\Scripts\activate
+# Linux/macOS:
+source .venv/bin/activate
+
+# Install required dependencies
+pip install -r requirements.txt
+```
+
+## 3. Configuration & Environment Setup
+
+Copy `.env.example` to `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your credentials:
+
+1. **Telegram Bot Token**: Create a bot via `@BotFather` on Telegram and copy the token:
+   ```env
+   TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ
+   ```
+
+2. **Authorized Telegram User IDs**:
+   Open Telegram and message `@userinfobot` to retrieve your numeric User ID:
+   ```env
+   AUTHORIZED_TELEGRAM_USER_IDS=123456789
+   ```
+
+3. **Alpaca Paper Trading API Keys**:
+   Sign in to your free Alpaca dashboard at `https://alpaca.markets`, switch to Paper Trading, and generate API keys:
+   ```env
+   ALPACA_API_KEY=your_paper_key_here
+   ALPACA_SECRET_KEY=your_paper_secret_here
+   ALPACA_BASE_URL=https://paper-api.alpaca.markets
+   PAPER_TRADING_ONLY=true
+   ```
+
+4. **SEC EDGAR User Agent**:
+   Required by the SEC for free EDGAR API access (Format: `Name email@example.com`):
+   ```env
+   SEC_USER_AGENT=DayTraderBot your_email@domain.com
+   ```
+
+## 4. Running the Bot
+
+```bash
+python run_bot.py
+```
+
+The bot will initialize the SQLite database, verify configuration security, start the market scheduler, and begin polling Telegram.
+
+## 5. Telegram Commands Reference
+
+### General Commands
+- `/start` - Start bot and check user authorization
+- `/help` - View complete command manual
+- `/menu` - Interactive dashboard with inline buttons
+- `/status` - Market hours, NYSE calendar status, and broker connection
+- `/settings` - View active trading budget and risk limits
+- `/watchlist` - View monitored stocks
+- `/addstock TICKER` - Add symbol to watchlist (e.g. `/addstock TSLA`)
+- `/removestock TICKER` - Remove symbol from watchlist
+
+### 11 Core Trading Skills
+1. `/scan` - Chart scanner menu (`/scan daily`, `/scan orb`, `/scan breakout`, `/scan momentum`, `/scan watchlist`)
+2. `/universe` - Query Nasdaq Trader directories (~5,900 US common stocks & ADRs)
+3. `/news [TICKER]` - Breaking headlines, today's price move, and SEC 8-K filings
+4. `/entry TICKER` - Intraday 15-minute Opening Range Breakout (ORB) entry timer
+5. `/watch TICKER` - Monitor symbol bar-by-bar until breakout triggers
+6. `/unwatch TICKER` - Stop monitoring symbol
+7. `/exit [plan] TICKER` - Calculate opening-range midpoint stop and 1R/2R target
+8. `/timemachine TICKER` - Run 10,000 historical Monte Carlo simulations and rule backtest
+9. `/risk [TICKER]` - Evaluate 15 pre-trade risk checks
+10. `/budget [status|set]` - View and configure capital, position caps, and max loss per trade
+11. `/broker` - Account balance, buying power, open positions, and orders
+12. `/positions` - List currently open paper positions
+13. `/orders` - Review recent orders on broker
+14. `/order TICKER` - Generate an order proposal with manual approval buttons
+15. `/alerts` - Manage price, stop, target, and NYSE opening bell alerts
+16. `/analyst TICKER` - SEC EDGAR XBRL company facts, revenue, margins, and EPS growth
+17. `/pelosi` - House Periodic Transaction Reports under the STOCK Act
+
+## 6. Mandatory Order Approval Workflow
+
+To ensure total capital protection, the system executes trades through 8 strict steps:
+1. **Signal**: Identified via scanner or `/order TICKER`.
+2. **Risk Check**: Sized by Budget Manager and validated by Risk Manager against 15 rules.
+3. **Order Preview**: Interactive Telegram card displaying symbol, side, shares, price, stop loss, take profit, notional value, and max risk.
+4. **Manual Approval**: Two inline buttons presented: `[ APPROVE ORDER ]` and `[ REJECT ORDER ]`.
+5. **Approval Validation**: Verifies authorizing user ID, 5-minute expiration TTL, idempotency (no double submissions), and re-runs risk checks.
+6. **Execution**: Dispatched to Alpaca Paper Trading API.
+7. **Confirmation**: Sends live broker order ID, status, and fill details to Telegram.
+8. **Persistence**: Saves order and execution state to SQLite database.
+
+## 7. Automated Testing
+
+Run the complete test suite (357 tests including all 315 original skill tests):
+
+```bash
+python -m unittest discover -s tests -v
 ```
 
 MIT. Made by [Jake Schincariol](https://opusjake.ai).

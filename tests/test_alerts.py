@@ -130,7 +130,7 @@ class Quotes(unittest.TestCase):
             q, errors = alerts.get_quotes(["TSLA"], "yahoo", d)
             self.assertEqual((q["TSLA"]["price"], errors), (366.475, []))
         finally:
-            shutil.rmtree(d)
+            shutil.rmtree(d, ignore_errors=True)
 
 
 class FakeNet(object):

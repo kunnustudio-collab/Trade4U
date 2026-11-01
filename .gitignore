@@ -1,0 +1,24 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment and secrets
+.env
+
+# Database
+*.db
+*.sqlite3
+
+# Trader local state
+trader/state/
+trader/prices.json
+trader/portfolio.json
+trader/orders.json
+trader/entry.json
+trader/plan.json
+trader/timemachine.json
+trader/watchlist.json
+
+# Logs
+logs/*.log

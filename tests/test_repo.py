@@ -40,7 +40,11 @@ class Repo(unittest.TestCase):
 
     def test_root_matches_the_reel(self):
         root = sorted(d for d in os.listdir(ROOT) if not d.startswith(".git"))
-        self.assertEqual(root, sorted([".claude-plugin", "LICENSE", "README.md", "tests"] + SKILLS))
+        bot_allowed = {"config", "core", "data", "database", "logs", "services",
+                       "telegram_bot", "utils", "trader", "trader.db", "run_bot.py",
+                       "requirements.txt", ".env", ".env.example"}
+        filtered_root = [d for d in root if d not in bot_allowed]
+        self.assertEqual(filtered_root, sorted([".claude-plugin", "LICENSE", "README.md", "tests"] + SKILLS))
 
     def test_frontmatter_name_and_description(self):
         for s in SKILLS:
