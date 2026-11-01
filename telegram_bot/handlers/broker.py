@@ -14,6 +14,7 @@ from core.entry_adapter import EntryAdapter
 from core.exit_adapter import ExitAdapter
 from core.budget_adapter import BudgetAdapter
 from core.alerts_adapter import AlertsAdapter
+from config.settings import settings
 from database.database import get_session
 from database.repository import Repository
 

@@ -40,6 +40,8 @@ def build_application(token: Optional[str] = None) -> Application:
     # 1. General commands
     app.add_handler(CommandHandler("start", h.start_command))
     app.add_handler(CommandHandler("help", h.help_command))
+    app.add_handler(CommandHandler("guide", h.guide_command))
+    app.add_handler(CommandHandler("info", h.guide_command))
     app.add_handler(CommandHandler("menu", h.menu_command))
     app.add_handler(CommandHandler("status", h.status_command))
     app.add_handler(CommandHandler("settings", h.settings_command))

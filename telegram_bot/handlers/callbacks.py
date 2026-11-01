@@ -56,6 +56,14 @@ async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_T
                 parse_mode="Markdown",
                 reply_markup=main_menu_keyboard()
             )
+        elif data == "nav:guide":
+            from telegram_bot.messages.formatters import format_bot_guide_message
+            from telegram_bot.keyboards.inline import guide_keyboard
+            await query.edit_message_text(
+                format_bot_guide_message(),
+                parse_mode="Markdown",
+                reply_markup=guide_keyboard()
+            )
         elif data == "nav:scan":
             await query.edit_message_text(
                 "📊 *US MARKET SCANNER*\nSelect a scanning strategy:",

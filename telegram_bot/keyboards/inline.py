@@ -7,6 +7,9 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     """Main navigation keyboard."""
     keyboard = [
         [
+            InlineKeyboardButton("📖 Bot Info & Control Guide", callback_data="nav:guide"),
+        ],
+        [
             InlineKeyboardButton("📊 Scanner", callback_data="nav:scan"),
             InlineKeyboardButton("📰 News", callback_data="nav:news"),
         ],
@@ -33,6 +36,24 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton("🤖 Auto-Trade Settings", callback_data="nav:autotrade"),
         ],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def guide_keyboard() -> InlineKeyboardMarkup:
+    """Navigation keyboard for the Bot Info & Control Guide."""
+    keyboard = [
+        [
+            InlineKeyboardButton("🤖 Auto-Trade Settings", callback_data="nav:autotrade"),
+            InlineKeyboardButton("⭐ Watchlist", callback_data="nav:watchlist"),
+        ],
+        [
+            InlineKeyboardButton("📊 Scanner", callback_data="nav:scan"),
+            InlineKeyboardButton("📈 Paper Broker", callback_data="nav:broker"),
+        ],
+        [
+            InlineKeyboardButton("🔙 Main Menu", callback_data="nav:menu"),
+        ]
     ]
     return InlineKeyboardMarkup(keyboard)
 

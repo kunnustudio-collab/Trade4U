@@ -191,6 +191,36 @@ class TestBotHandlers(unittest.IsolatedAsyncioTestCase):
         query.edit_message_text.assert_called_once()
         self.assertIn("DAY TRADER CONTROL DASHBOARD", query.edit_message_text.call_args[0][0])
 
+    async def test_guide_command_and_callback(self):
+        update, context = self._make_update("/guide")
+        await h.guide_command(update, context)
+        msg_text = update.message.reply_text.call_args[0][0]
+        self.assertIn("TRADE4U QUANT TRADING BOT - INFO & CONTROL GUIDE", msg_text)
+        self.assertIn("@MeAwara", msg_text)
+        self.assertIn("HOW TO FULLY CONTROL THE BOT", msg_text)
+
+        # Test nav:guide button callback
+        query = MagicMock(spec=CallbackQuery)
+        query.data = "nav:guide"
+        query.from_user = self.user
+        query.answer = AsyncMock()
+        query.edit_message_text = AsyncMock()
+
+        cb_update = MagicMock(spec=Update)
+        cb_update.effective_user = self.user
+        cb_update.effective_chat = self.chat
+        cb_update.effective_message = MagicMock(spec=Message)
+        cb_update.message = None
+        cb_update.callback_query = query
+
+        context = MagicMock(spec=ContextTypes.DEFAULT_TYPE)
+        context.args = []
+
+        await h.callback_query_handler(cb_update, context)
+        query.answer.assert_called_once()
+        query.edit_message_text.assert_called_once()
+        self.assertIn("INFO & CONTROL GUIDE", query.edit_message_text.call_args[0][0])
+
 
 if __name__ == "__main__":
     unittest.main()

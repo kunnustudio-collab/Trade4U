@@ -321,3 +321,17 @@ async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     lines.append("To revoke access: `/revoke <USER_ID>`")
 
     await update.effective_message.reply_text("\n".join(lines), parse_mode="Markdown")
+
+
+@authorized_only
+async def guide_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /guide and /info commands displaying full bot info and control manual."""
+    from telegram_bot.messages.formatters import format_bot_guide_message
+    from telegram_bot.keyboards.inline import guide_keyboard
+
+    text = format_bot_guide_message()
+    await update.effective_message.reply_text(
+        text,
+        parse_mode="Markdown",
+        reply_markup=guide_keyboard()
+    )
