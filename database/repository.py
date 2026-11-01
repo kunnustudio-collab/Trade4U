@@ -188,6 +188,23 @@ class Repository:
                 alert.is_active = False
             await self.session.flush()
 
+    # ----------------- User Settings -----------------
+    async def get_user_setting(self, user_id: int, key: str, default: str = "") -> str:
+        stmt = select(UserSetting.value).where(UserSetting.user_id == user_id, UserSetting.key == key)
+        result = await self.session.execute(stmt)
+        val = result.scalar_one_or_none()
+        return val if val is not None else default
+
+    async def set_user_setting(self, user_id: int, key: str, value: str) -> None:
+        stmt = select(UserSetting).where(UserSetting.user_id == user_id, UserSetting.key == key)
+        result = await self.session.execute(stmt)
+        setting = result.scalar_one_or_none()
+        if setting:
+            setting.value = value
+        else:
+            self.session.add(UserSetting(user_id=user_id, key=key, value=value))
+        await self.session.flush()
+
     # ----------------- Audit Log -----------------
     async def log_audit(self, action: str, details: str, user_id: Optional[int] = None) -> None:
         log_entry = AuditLog(user_id=user_id, action=action, details=details, timestamp=utcnow())

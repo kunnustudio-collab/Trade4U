@@ -175,3 +175,55 @@ async def removestock_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         await update.effective_message.reply_text(f"🗑 Removed `{sym}` from your watchlist.", parse_mode="Markdown")
     else:
         await update.effective_message.reply_text(f"ℹ️ `{sym}` was not found on your watchlist.", parse_mode="Markdown")
+
+
+@authorized_only
+async def autotrade_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Handle /autotrade [on|off] command."""
+    from telegram_bot.keyboards.inline import autotrade_keyboard
+    from services.autotrade_service import AutoTradeService
+
+    user_id = update.effective_user.id
+    service = AutoTradeService()
+
+    if context.args:
+        arg = context.args[0].lower()
+        if arg in ("on", "true", "enable", "start"):
+            await service.set_auto_trade(user_id, True)
+            await update.effective_message.reply_text(
+                "🟢 *AUTO-TRADE ENABLED (PAPER TRADING)*\n\n"
+                "• When an intraday ORB setup triggers on your watchlist, the bot will automatically submit a paper bracket order.\n"
+                "• Broker will automatically take profit or stop loss.\n"
+                "• All pre-trade risk checks remain strictly enforced.\n\n"
+                "To disable: `/autotrade off`",
+                parse_mode="Markdown",
+                reply_markup=autotrade_keyboard(True)
+            )
+            return
+        elif arg in ("off", "false", "disable", "stop"):
+            await service.set_auto_trade(user_id, False)
+            await update.effective_message.reply_text(
+                "🔴 *AUTO-TRADE DISABLED (MANUAL APPROVAL MODE)*\n\n"
+                "• When an entry triggers, you will receive an alert with [APPROVE ORDER] button.\n"
+                "• No orders will execute without explicit button tap.\n\n"
+                "To enable: `/autotrade on`",
+                parse_mode="Markdown",
+                reply_markup=autotrade_keyboard(False)
+            )
+            return
+
+    # Status view
+    is_enabled = await service.is_auto_trade_enabled(user_id)
+    status_icon = "🟢 ACTIVE (Auto-Execute)" if is_enabled else "🔴 INACTIVE (Manual Approval Required)"
+
+    text = (
+        "🤖 *AUTO-TRADE & ENTRY ENGINE*\n\n"
+        f"• *Status:* {status_icon}\n"
+        f"• *Mode:* `PAPER TRADING ONLY` 🔒\n"
+        f"• *Trading Window:* `09:45 - 15:30 ET`\n"
+        f"• *Auto-Exit:* Bracket take-profit + stop-loss + 15:55 flat-by close\n\n"
+        "Commands:\n"
+        "• `/autotrade on` - Turn ON auto-trading\n"
+        "• `/autotrade off` - Revert to manual approval mode"
+    )
+    await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=autotrade_keyboard(is_enabled))

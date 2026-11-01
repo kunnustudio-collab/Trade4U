@@ -30,6 +30,24 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
             InlineKeyboardButton("🏛 Pelosi Tracker", callback_data="nav:pelosi"),
             InlineKeyboardButton("⭐ Watchlist", callback_data="nav:watchlist"),
         ],
+        [
+            InlineKeyboardButton("🤖 Auto-Trade Settings", callback_data="nav:autotrade"),
+        ],
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+
+def autotrade_keyboard(is_enabled: bool) -> InlineKeyboardMarkup:
+    """Auto-trade toggle keyboard."""
+    toggle_text = "🔴 Turn OFF Auto-Trade" if is_enabled else "🟢 Turn ON Auto-Trade"
+    action = "autotrade:off" if is_enabled else "autotrade:on"
+    keyboard = [
+        [
+            InlineKeyboardButton(toggle_text, callback_data=action)
+        ],
+        [
+            InlineKeyboardButton("🔙 Main Menu", callback_data="nav:menu")
+        ]
     ]
     return InlineKeyboardMarkup(keyboard)
 

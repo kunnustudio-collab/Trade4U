@@ -46,6 +46,7 @@ def build_application(token: Optional[str] = None) -> Application:
     app.add_handler(CommandHandler("watchlist", h.watchlist_command))
     app.add_handler(CommandHandler("addstock", h.addstock_command))
     app.add_handler(CommandHandler("removestock", h.removestock_command))
+    app.add_handler(CommandHandler("autotrade", h.autotrade_command))
 
     # 2. Scanner commands
     app.add_handler(CommandHandler("scan", h.scan_command))

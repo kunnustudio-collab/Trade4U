@@ -181,6 +181,35 @@ async def callback_query_handler(update: Update, context: ContextTypes.DEFAULT_T
             from telegram_bot.handlers.general import watchlist_command
             context.args = []
             await watchlist_command(update, context)
+        elif data == "nav:autotrade":
+            from telegram_bot.handlers.general import autotrade_command
+            context.args = []
+            await autotrade_command(update, context)
+        elif data == "autotrade:on":
+            from services.autotrade_service import AutoTradeService
+            from telegram_bot.keyboards.inline import autotrade_keyboard
+            await AutoTradeService().set_auto_trade(user_id, True)
+            await query.edit_message_text(
+                "🟢 *AUTO-TRADE ENABLED (PAPER TRADING)*\n\n"
+                "• When an intraday ORB setup triggers on your watchlist, the bot will automatically submit a paper bracket order.\n"
+                "• Broker will automatically take profit or stop loss.\n"
+                "• All pre-trade risk checks remain strictly enforced.\n\n"
+                "To disable: `/autotrade off`",
+                parse_mode="Markdown",
+                reply_markup=autotrade_keyboard(True)
+            )
+        elif data == "autotrade:off":
+            from services.autotrade_service import AutoTradeService
+            from telegram_bot.keyboards.inline import autotrade_keyboard
+            await AutoTradeService().set_auto_trade(user_id, False)
+            await query.edit_message_text(
+                "🔴 *AUTO-TRADE DISABLED (MANUAL APPROVAL MODE)*\n\n"
+                "• When an entry triggers, you will receive an alert with [APPROVE ORDER] button.\n"
+                "• No orders will execute without explicit button tap.\n\n"
+                "To enable: `/autotrade on`",
+                parse_mode="Markdown",
+                reply_markup=autotrade_keyboard(False)
+            )
 
         # 3. Scanner Actions
         elif data == "scan:daily":

@@ -5,6 +5,7 @@ import logging
 from typing import Optional, Callable, Any
 from utils.ny_time import get_ny_now, is_nyse_open
 from services.alert_service import AlertService
+from services.autotrade_service import AutoTradeService
 from services.broker_service import get_broker_instance
 from database.database import get_session
 from database.repository import Repository
@@ -19,6 +20,7 @@ class SchedulerService:
     def __init__(self, bot_app: Optional[Any] = None):
         self.bot_app = bot_app
         self.alert_service = AlertService()
+        self.autotrade_service = AutoTradeService(bot_app=bot_app)
         self._running = False
         self._task: Optional[asyncio.Task] = None
 
@@ -50,10 +52,15 @@ class SchedulerService:
                 if triggered and self.bot_app:
                     await self._dispatch_alert_notifications(triggered)
 
-                # 2. Daily close flatten safety check at 15:55 ET
+                # 2. Watchlist Entry Scan & Auto-Trade Processing (during market session)
+                if is_open:
+                    await self.autotrade_service.scan_and_process_entries()
+
+                # 3. Daily close flatten safety check at 15:55 ET
                 time_str = now.strftime("%H:%M")
                 if time_str == settings.FLAT_BY and is_open:
                     await self._dispatch_flat_by_close_reminder()
+                    await self.autotrade_service.check_flat_by_close_auto_exit()
 
                 await asyncio.sleep(settings.ALERT_CHECK_INTERVAL_SECONDS)
             except asyncio.CancelledError:
