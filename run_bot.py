@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import os
 import sys
 from config.settings import settings
 from utils.logging_setup import setup_logging
@@ -58,6 +59,26 @@ async def main():
     logger.info("Authorized Telegram User IDs: %s", settings.get_authorized_user_ids() or "(None configured yet)")
     logger.info("Bot is polling for updates. Press Ctrl+C to stop.")
 
+    # 7. Start Healthcheck Server for Cloud Hosts (Render, Railway, Heroku) if PORT is set
+    health_server = None
+    port_env = os.environ.get("PORT")
+    if port_env:
+        try:
+            port = int(port_env)
+
+            async def handle_health_check(reader, writer):
+                await reader.read(1024)
+                resp = b"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 2\r\n\r\nOK"
+                writer.write(resp)
+                await writer.drain()
+                writer.close()
+                await writer.wait_closed()
+
+            health_server = await asyncio.start_server(handle_health_check, "0.0.0.0", port)
+            logger.info("Cloud deployment health server listening on port %d", port)
+        except Exception as e:
+            logger.warning("Could not start cloud health server on port %s: %s", port_env, e)
+
     try:
         # Run polling loop
         await app.initialize()
@@ -71,6 +92,9 @@ async def main():
     except (KeyboardInterrupt, asyncio.CancelledError):
         logger.info("Stopping bot gracefully...")
     finally:
+        if health_server:
+            health_server.close()
+            await health_server.wait_closed()
         scheduler.stop()
         if app.updater and app.updater.running:
             await app.updater.stop()
