@@ -32,23 +32,27 @@ async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         entry_price = None
         or_high = None
         or_low = None
+        stop_rule = "pct:1.5"
 
-        if "opening_range" in entry_res:
+        if entry_res.get("opening_range"):
             or_high = float(entry_res["opening_range"]["high"])
             or_low = float(entry_res["opening_range"]["low"])
+            stop_rule = "or-mid"
 
-        if entry_res.get("trigger", {}).get("price"):
-            entry_price = float(entry_res["trigger"]["price"])
-        elif entry_res.get("last", {}).get("close"):
-            entry_price = float(entry_res["last"]["close"])
+        trig = entry_res.get("trigger") or {}
+        last = entry_res.get("last") or {}
+
+        if trig.get("price"):
+            entry_price = float(trig["price"])
+        elif last.get("close"):
+            entry_price = float(last["close"])
+        elif entry_res.get("prev_close"):
+            entry_price = float(entry_res["prev_close"])
         else:
             # Fall back to live quote
             q = await alerts_adapter.fetch_quote(sym)
             if q and q.get("price"):
                 entry_price = float(q["price"])
-                if or_high is None:
-                    or_high = entry_price * 0.995
-                    or_low = entry_price * 0.985
 
         if not entry_price:
             await msg.edit_text(f"❌ Could not obtain a reference price for `{sym}`.")
@@ -57,7 +61,7 @@ async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         plan_res = await exit_adapter.plan_exit(
             symbol=sym,
             entry=entry_price,
-            stop_rule="or-mid",
+            stop_rule=stop_rule,
             target_rule="1R",
             or_high=or_high,
             or_low=or_low

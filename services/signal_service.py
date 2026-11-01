@@ -48,20 +48,30 @@ class SignalService:
 
         # Step 3: If entry triggered or waiting with close price, construct exit plan
         entry_price = None
-        if entry_data.get("status") == "triggered" and "trigger" in entry_data:
-            entry_price = float(entry_data["trigger"]["price"])
-        elif entry_data.get("last", {}).get("close"):
-            entry_price = float(entry_data["last"]["close"])
+        trig = entry_data.get("trigger") or {}
+        last = entry_data.get("last") or {}
 
-        if entry_price and "opening_range" in entry_data:
-            or_high = float(entry_data["opening_range"]["high"])
-            or_low = float(entry_data["opening_range"]["low"])
+        if entry_data.get("status") == "triggered" and trig.get("price"):
+            entry_price = float(trig["price"])
+        elif last.get("close"):
+            entry_price = float(last["close"])
+        elif entry_data.get("prev_close"):
+            entry_price = float(entry_data["prev_close"])
+
+        if entry_price:
+            stop_rule = "pct:1.5"
+            or_high = None
+            or_low = None
+            if entry_data.get("opening_range"):
+                or_high = float(entry_data["opening_range"]["high"])
+                or_low = float(entry_data["opening_range"]["low"])
+                stop_rule = "or-mid"
 
             # Exit plan
             plan_data = await self.exit.plan_exit(
                 symbol=sym,
                 entry=entry_price,
-                stop_rule="or-mid",
+                stop_rule=stop_rule,
                 target_rule="1R",
                 or_high=or_high,
                 or_low=or_low
